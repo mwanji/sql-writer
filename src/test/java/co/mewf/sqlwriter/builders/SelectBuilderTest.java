@@ -106,15 +106,21 @@ public class SelectBuilderTest {
   }
 
   @Test
-  public void should_order_on_multiple_tables() {
+  public void should_order_on_last_selected_table() {
     String sql = select().from(Simple.class).asc("name").from(SimpleOneToOne.class).desc("other").toString();
     assertEquals(select().from(Simple.class).from(SimpleOneToOne.class) + " ORDER BY Simple.name ASC, SimpleOneToOne.other DESC", sql);
   }
 
   @Test
-  public void should_order_on_multiple_joined_tables() {
+  public void should_order_on_last_joined_table() {
     String sql = select().from(Simple.class).asc("name").join(SimpleOneToOne.class).desc("other").toString();
     assertEquals(select().from(Simple.class).join(SimpleOneToOne.class) + " ORDER BY Simple.name ASC, SimpleOneToOne.other DESC", sql);
+  }
+
+  @Test
+  public void should_order_on_source_of_last_join() {
+    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).asc("other").toString();
+    assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id INNER JOIN ParentToMany ON ParentToMany.id = SimpleOneToMany.parentToMany_id ORDER BY ParentToMany.other ASC", sql);
   }
 
   @Test

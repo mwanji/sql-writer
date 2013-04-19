@@ -4,8 +4,10 @@ import static co.mewf.sqlwriter.Queries.select;
 import static co.mewf.sqlwriter.Queries.update;
 import static co.mewf.sqlwriter.builders.WhereBuilder.Bool.OR;
 import static org.junit.Assert.assertEquals;
+import co.mewf.sqlwriter.testutils.ParentToMany;
 import co.mewf.sqlwriter.testutils.Simple;
 import co.mewf.sqlwriter.testutils.SimpleJpa;
+import co.mewf.sqlwriter.testutils.SimpleOneToMany;
 import co.mewf.sqlwriter.testutils.SimpleOneToOne;
 
 import org.junit.Test;
@@ -67,6 +69,11 @@ public class WhereBuilderTest {
     assertEquals(select().from(SimpleJpa.class) + " WHERE simple_with_jpa.name_with_jpa = ?", select().from(SimpleJpa.class).where().eq("name").toString());
   }
 
+  @Test
+  public void should_use_source_of_last_join() {
+    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).where().eq("other").toString();
+    assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id INNER JOIN ParentToMany ON ParentToMany.id = SimpleOneToMany.parentToMany_id WHERE ParentToMany.other = ?", sql);
+  }
 
   @Test
   public void sql_should_alias_toString() {

@@ -13,6 +13,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 public class TableInfo {
+  private static final String SEPARATOR = "_";
   public final Class<?> entityClass;
   public final String name;
   public final List<Join> joins = new ArrayList<Join>();
@@ -29,6 +30,14 @@ public class TableInfo {
 
   public ColumnInfo column(String column, String alias) {
     return new ColumnInfo(this, getColumnName(column), alias);
+  }
+
+  public TableInfo join(Class<?> from, Class<?> to) {
+    TableInfo fromTable = new TableInfo(from);
+    Join join = fromTable.join(to);
+    joins.add(join);
+
+    return fromTable;
   }
 
   public StringBuilder toColumnsString(StringBuilder builder) {
@@ -76,7 +85,7 @@ public class TableInfo {
     }
   }
 
-  public Join join(Class<?> targetClass) {
+  private Join join(Class<?> targetClass) {
     for (Field field : targetClass.getDeclaredFields()) {
       field.setAccessible(true);
       Join join = null;
@@ -84,19 +93,19 @@ public class TableInfo {
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo idColumn = targetTable.getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(targetTable.name + "_" + idColumn.name)));
+        join = new Join(this, idColumn, targetTable.column(columnize(targetTable.name + SEPARATOR + idColumn.name)));
       }
 
       if (Entities.isToOneRelation(field) && entityClass.equals(field.getType())) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo joinColumn = getIdColumn();
-        join = new Join(this, joinColumn, targetTable.column(columnize(name + "_" + joinColumn.name)));
+        join = new Join(this, joinColumn, targetTable.column(columnize(name + SEPARATOR + joinColumn.name)));
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo targetColumn = targetTable.getIdColumn();
-        String joinColumnName = columnize(targetTable.name + "_" + targetColumn.name);
+        String joinColumnName = columnize(targetTable.name + SEPARATOR + targetColumn.name);
         join = new Join(this, targetColumn, column(joinColumnName));
       }
 
@@ -113,17 +122,17 @@ public class TableInfo {
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(name + "_" + idColumn.name)));
+        join = new Join(this, idColumn, targetTable.column(columnize(name + SEPARATOR + idColumn.name)));
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(field.getType())) {
         ColumnInfo idColumn = new TableInfo(targetClass).getIdColumn();
-        join = new Join(this, idColumn, column(field.getName() + "_" + idColumn.name));
+        join = new Join(this, idColumn, column(field.getName() + SEPARATOR + idColumn.name));
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
         ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, new TableInfo(targetClass).column(columnize(name + "_" + idColumn.name)));
+        join = new Join(this, idColumn, new TableInfo(targetClass).column(columnize(name + SEPARATOR + idColumn.name)));
       }
 
       if (join != null) {
@@ -133,13 +142,6 @@ public class TableInfo {
     }
 
     return null;
-  }
-
-  public void join(Class<?> from, Class<?> to) {
-    TableInfo fromTable = new TableInfo(from);
-    Join join = fromTable.join(to);
-    joins.add(join);
-
   }
 
   private ColumnInfo getIdColumn() {

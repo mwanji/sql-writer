@@ -37,7 +37,7 @@ select().from(User.class).columns("name").sql(); // SELECT usr_tbl.usr_name FROM
 
 As in JPA, the @Id annotation is required. It determines whether field or property access is used: place it on a field for field access or on a method for method access.
 
-Tables can be joined. Unidirectional and bidirectional @OneToOne, @OneToMany and @ManyToOne are supported.
+Joins are derived from the JPA annotations. Unidirectional and bidirectional @OneToOne, @OneToMany and @ManyToOne are supported.
 
 ````java
 class Address {

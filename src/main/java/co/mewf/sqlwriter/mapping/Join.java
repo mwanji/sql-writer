@@ -1,9 +1,9 @@
 package co.mewf.sqlwriter.mapping;
 
 public class Join {
-  private final ColumnInfo from;
-  public final ColumnInfo to;
   private final TableInfo root;
+  private final ColumnInfo from;
+  private final ColumnInfo to;
 
   public Join(TableInfo root, ColumnInfo from, ColumnInfo to) {
     this.root = root;
