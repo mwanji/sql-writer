@@ -71,6 +71,15 @@ public class SelectBuilder {
     return this;
   }
 
+  public SelectBuilder function(String function, String column) {
+    return function(function, column, null);
+  }
+
+  public SelectBuilder function(String function, String column, String alias) {
+    currentTable.addFunction(function, column, alias);
+    return this;
+  }
+
   public SelectWhereBuilder where() {
     SelectWhereBuilder where = new SelectWhereBuilder(currentTable, this, wheres.isEmpty());
     wheres.add(where);

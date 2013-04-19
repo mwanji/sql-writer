@@ -32,6 +32,13 @@ public class TableInfo {
     return new ColumnInfo(this, getColumnName(column), alias);
   }
 
+  public FunctionColumnInfo addFunction(String function, String column, String alias) {
+    FunctionColumnInfo functionColumnInfo = new FunctionColumnInfo(this, function, getColumnName(column), alias);
+    columns.add(functionColumnInfo);
+
+    return functionColumnInfo;
+  }
+
   public TableInfo join(Class<?> from, Class<?> to) {
     TableInfo fromTable = new TableInfo(from);
     Join join = fromTable.join(to);

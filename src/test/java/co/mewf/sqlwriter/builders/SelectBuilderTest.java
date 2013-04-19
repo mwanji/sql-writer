@@ -133,4 +133,9 @@ public class SelectBuilderTest {
     assertEquals(select().from(Simple.class).toString(), select().from(Simple.class).sql());
     assertEquals(select().from(Simple.class).where().eq("id").toString(), select().from(Simple.class).where().eq("id").sql());
   }
+
+  @Test
+  public void should_accept_custom_sql_functions() {
+    assertEquals("SELECT AVG(Simple.age) AS \"average_age\" FROM Simple", select().from(Simple.class).function("AVG", "age", "average_age").sql());
+  }
 }
