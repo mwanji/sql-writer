@@ -1,17 +1,19 @@
 package co.mewf.sqlwriter.mapping;
 
-public class Join {
+class Join {
   private final TableInfo root;
   private final ColumnInfo from;
   private final ColumnInfo to;
+  private final String type;
 
-  public Join(TableInfo root, ColumnInfo from, ColumnInfo to) {
+  Join(TableInfo root, ColumnInfo from, ColumnInfo to, String type) {
     this.root = root;
     this.from = from;
     this.to = to;
+    this.type = type;
   }
 
   public StringBuilder toString(StringBuilder builder) {
-    return builder.append(" INNER JOIN ").append(root.name).append(" ON ").append(from).append(" = ").append(to);
+    return builder.append(' ').append(type).append(" JOIN ").append(root.name).append(" ON ").append(from).append(" = ").append(to);
   }
 }

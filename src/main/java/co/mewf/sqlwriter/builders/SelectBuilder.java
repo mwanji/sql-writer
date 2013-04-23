@@ -55,6 +55,28 @@ public class SelectBuilder {
     return this;
   }
 
+
+  /**
+   * Left joins this entity to the previous entity given to the builder.
+   *
+   * entityClass becomes the current entity.
+   */
+  public SelectBuilder leftJoin(Class<?> entityClass) {
+    currentTable = rootTable.leftJoin(entityClass, currentTable.entityClass);
+    return this;
+  }
+
+
+  /**
+   * Right joins this entity to the previous entity given to the builder.
+   *
+   * entityClass becomes the current entity.
+   */
+  public SelectBuilder rightJoin(Class<?> entityClass) {
+    currentTable = rootTable.rightJoin(entityClass, currentTable.entityClass);
+    return this;
+  }
+
   /**
    * Adds the columns of the current entity to the select clause
    */

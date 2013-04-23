@@ -40,11 +40,15 @@ public class TableInfo {
   }
 
   public TableInfo join(Class<?> from, Class<?> to) {
-    TableInfo fromTable = new TableInfo(from);
-    Join join = fromTable.join(to);
-    joins.add(join);
+    return join(from, to, "INNER");
+  }
 
-    return fromTable;
+  public TableInfo leftJoin(Class<?> from, Class<?> to) {
+    return join(from, to, "LEFT");
+  }
+
+  public TableInfo rightJoin(Class<?> from, Class<?> to) {
+    return join(from, to, "RIGHT");
   }
 
   public StringBuilder toColumnsString(StringBuilder builder) {
@@ -92,7 +96,15 @@ public class TableInfo {
     }
   }
 
-  private Join join(Class<?> targetClass) {
+  private TableInfo join(Class<?> from, Class<?> to, String type) {
+    TableInfo fromTable = new TableInfo(from);
+    Join join = fromTable.join(to, type);
+    joins.add(join);
+
+    return fromTable;
+  }
+
+  private Join join(Class<?> targetClass, String type) {
     for (Field field : targetClass.getDeclaredFields()) {
       field.setAccessible(true);
       Join join = null;
@@ -100,20 +112,20 @@ public class TableInfo {
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo idColumn = targetTable.getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(targetTable.name + SEPARATOR + idColumn.name)));
+        join = new Join(this, idColumn, targetTable.column(columnize(targetTable.name + SEPARATOR + idColumn.name)), type);
       }
 
       if (Entities.isToOneRelation(field) && entityClass.equals(field.getType())) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo joinColumn = getIdColumn();
-        join = new Join(this, joinColumn, targetTable.column(columnize(name + SEPARATOR + joinColumn.name)));
+        join = new Join(this, joinColumn, targetTable.column(columnize(name + SEPARATOR + joinColumn.name)), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo targetColumn = targetTable.getIdColumn();
         String joinColumnName = columnize(targetTable.name + SEPARATOR + targetColumn.name);
-        join = new Join(this, targetColumn, column(joinColumnName));
+        join = new Join(this, targetColumn, column(joinColumnName), type);
       }
 
       if (join != null) {
@@ -129,17 +141,17 @@ public class TableInfo {
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         TableInfo targetTable = new TableInfo(targetClass);
         ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(name + SEPARATOR + idColumn.name)));
+        join = new Join(this, idColumn, targetTable.column(columnize(name + SEPARATOR + idColumn.name)), type);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(field.getType())) {
         ColumnInfo idColumn = new TableInfo(targetClass).getIdColumn();
-        join = new Join(this, idColumn, column(field.getName() + SEPARATOR + idColumn.name));
+        join = new Join(this, idColumn, column(field.getName() + SEPARATOR + idColumn.name), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
         ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, new TableInfo(targetClass).column(columnize(name + SEPARATOR + idColumn.name)));
+        join = new Join(this, idColumn, new TableInfo(targetClass).column(columnize(name + SEPARATOR + idColumn.name)), type);
       }
 
       if (join != null) {

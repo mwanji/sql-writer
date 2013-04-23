@@ -136,6 +136,19 @@ public class SelectBuilderTest {
 
   @Test
   public void should_accept_custom_sql_functions() {
-    assertEquals("SELECT AVG(Simple.age) AS \"average_age\" FROM Simple", select().from(Simple.class).function("AVG", "age", "average_age").sql());
+    String sql = select().from(Simple.class).function("AVG", "age", "average_age").sql();
+    assertEquals("SELECT AVG(Simple.age) AS \"average_age\" FROM Simple", sql);
+  }
+
+  @Test
+  public void should_left_join() {
+    String sql = select().from(Simple.class).leftJoin(SimpleRelation.class).sql();
+    assertEquals("SELECT Simple.* FROM Simple LEFT JOIN SimpleRelation ON Simple.id = SimpleRelation.simple_id", sql);
+  }
+
+  @Test
+  public void should_right_join() {
+    String sql = select().from(Simple.class).rightJoin(SimpleRelation.class).sql();
+    assertEquals("SELECT Simple.* FROM Simple RIGHT JOIN SimpleRelation ON Simple.id = SimpleRelation.simple_id", sql);
   }
 }
