@@ -56,5 +56,6 @@ sql-writer is copyright Moandji Ezana and licensed under the MIT License.
 
 ## TODO
 
+* Support alternative SQL syntaxes
 * Generate mappings for lightweight field-name safety
 * Support ManyToMany mappings
