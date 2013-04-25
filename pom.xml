@@ -12,6 +12,16 @@
   <name>sql-writer</name>
   <description>Writes SQL from Java classes</description>
   <url>http://mewf.co/sql-writer</url>
+  <developers>
+    <developer>
+      <id>moandji.ezana</id>
+      <email>mwanji@gmail.com</email>
+      <name>Mwanji Ezana</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+  </developers>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
