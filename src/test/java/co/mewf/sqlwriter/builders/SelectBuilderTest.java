@@ -41,6 +41,17 @@ public class SelectBuilderTest {
   }
 
   @Test
+  public void should_filter() {
+    String sql = select().from(Simple.class).where().eq("id").toString();
+    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.id = ?", sql);
+  }
+
+  @Test
+  public void should_qualify() {
+    assertEquals("SELECT Simple.* FROM Simple ORDER BY Simple.name ASC, Simple.other DESC LIMIT 10 OFFSET 7", select().from(Simple.class).asc("name").desc("other").limit(10).offset(7).toString());
+  }
+
+  @Test
   public void should_select_all_columns_from_multiple_tables() {
     String sql = select().from(Simple.class).from(SimpleOneToOne.class).toString();
     assertEquals("SELECT Simple.*, SimpleOneToOne.* FROM Simple INNER JOIN SimpleOneToOne ON SimpleOneToOne.id = Simple.simpleOneToOne_id", sql);
@@ -92,17 +103,6 @@ public class SelectBuilderTest {
   public void should_inner_join_multiple_tables() {
     String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).toString();
     assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id INNER JOIN ParentToMany ON ParentToMany.id = SimpleOneToMany.parentToMany_id", sql);
-  }
-
-  @Test
-  public void should_filter() {
-    String sql = select().from(Simple.class).where().eq("id").toString();
-    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.id = ?", sql);
-  }
-
-  @Test
-  public void should_qualify() {
-    assertEquals("SELECT Simple.* FROM Simple ORDER BY Simple.name ASC, Simple.other DESC LIMIT 10 OFFSET 7", select().from(Simple.class).asc("name").desc("other").limit(10).offset(7).toString());
   }
 
   @Test
