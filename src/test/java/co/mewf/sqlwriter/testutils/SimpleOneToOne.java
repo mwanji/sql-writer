@@ -1,6 +1,7 @@
 package co.mewf.sqlwriter.testutils;
 
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 
 public class SimpleOneToOne {
@@ -10,4 +11,8 @@ public class SimpleOneToOne {
 
   @OneToOne
   private Simple simple;
+
+  @OneToOne
+  @JoinColumn(name = "sotm_fk")
+  private SimpleOneToMany simpleOneToMany;
 }

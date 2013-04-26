@@ -9,6 +9,7 @@ import co.mewf.sqlwriter.testutils.ParentToMany;
 import co.mewf.sqlwriter.testutils.PkId;
 import co.mewf.sqlwriter.testutils.PropertyAccess;
 import co.mewf.sqlwriter.testutils.Simple;
+import co.mewf.sqlwriter.testutils.SimpleJoinColumn;
 import co.mewf.sqlwriter.testutils.SimpleJpa;
 import co.mewf.sqlwriter.testutils.SimpleOneToMany;
 import co.mewf.sqlwriter.testutils.SimpleOneToOne;
@@ -37,7 +38,8 @@ public class SelectBuilderTest {
 
   @Test
   public void should_use_names_in_annotations() {
-    assertEquals("SELECT simple_with_jpa.name_with_jpa FROM simple_with_jpa", select().from(SimpleJpa.class).columns("name").toString());
+    String sql = select().from(SimpleJpa.class).columns("name").sql();
+    assertEquals("SELECT simple_with_jpa.name_with_jpa FROM simple_with_jpa", sql);
   }
 
   @Test
@@ -48,84 +50,127 @@ public class SelectBuilderTest {
 
   @Test
   public void should_qualify() {
-    assertEquals("SELECT Simple.* FROM Simple ORDER BY Simple.name ASC, Simple.other DESC LIMIT 10 OFFSET 7", select().from(Simple.class).asc("name").desc("other").limit(10).offset(7).toString());
+    String sql = select().from(Simple.class).asc("name").desc("other").limit(10).offset(7).sql();
+    assertEquals("SELECT Simple.* FROM Simple ORDER BY Simple.name ASC, Simple.other DESC LIMIT 10 OFFSET 7", sql);
   }
 
   @Test
   public void should_select_all_columns_from_multiple_tables() {
-    String sql = select().from(Simple.class).from(SimpleOneToOne.class).toString();
-    assertEquals("SELECT Simple.*, SimpleOneToOne.* FROM Simple INNER JOIN SimpleOneToOne ON SimpleOneToOne.id = Simple.simpleOneToOne_id", sql);
+    String sql = select().from(Simple.class).from(SimpleOneToOne.class).sql();
+    assertEquals("SELECT Simple.*, SimpleOneToOne.* FROM Simple INNER JOIN SimpleOneToOne ON Simple.id = SimpleOneToOne.simple_id", sql);
   }
 
   @Test
   public void should_associate_columns_to_tables() {
-    String sql = select().from(Simple.class).columns("name", "another").from(SimpleOneToOne.class).column("name", "aliased_name").columns("another_jpa").toString();
-    assertEquals("SELECT Simple.name, Simple.another, SimpleOneToOne.name AS \"aliased_name\", SimpleOneToOne.another_jpa FROM Simple INNER JOIN SimpleOneToOne ON SimpleOneToOne.id = Simple.simpleOneToOne_id", sql);
+    String sql = select().from(Simple.class).columns("name", "another").from(SimpleOneToOne.class).column("name", "aliased_name").columns("another_jpa").sql();
+    assertEquals("SELECT Simple.name, Simple.another, SimpleOneToOne.name AS \"aliased_name\", SimpleOneToOne.another_jpa FROM Simple INNER JOIN SimpleOneToOne ON Simple.id = SimpleOneToOne.simple_id", sql);
   }
 
   @Test
   public void should_join_many_to_one_automatically() {
-    String sql = select().from(Simple.class).from(SimpleRelation.class).toString();
+    String sql = select().from(Simple.class).from(SimpleRelation.class).sql();
     assertEquals("SELECT Simple.*, SimpleRelation.* FROM Simple INNER JOIN SimpleRelation ON Simple.id = SimpleRelation.simple_id", sql);
+
+    sql = select().from(SimpleRelation.class).from(Simple.class).sql();
+    assertEquals("SELECT SimpleRelation.*, Simple.* FROM SimpleRelation INNER JOIN Simple ON Simple.id = SimpleRelation.simple_id", sql);
   }
 
   @Test
   public void should_join_one_to_one_automatically() {
-    String sql = select().from(Simple.class).columns("name").from(SimpleOneToOne.class).toString();
-    assertEquals("SELECT Simple.name, SimpleOneToOne.* FROM Simple INNER JOIN SimpleOneToOne ON SimpleOneToOne.id = Simple.simpleOneToOne_id", sql);
+    String sql = select().from(Simple.class).columns("name").from(SimpleOneToOne.class).sql();
+    assertEquals("SELECT Simple.name, SimpleOneToOne.* FROM Simple INNER JOIN SimpleOneToOne ON Simple.id = SimpleOneToOne.simple_id", sql);
+
+    sql = select().from(SimpleOneToOne.class).from(Simple.class).columns("name").sql();
+    assertEquals("SELECT SimpleOneToOne.*, Simple.name FROM SimpleOneToOne INNER JOIN Simple ON Simple.id = SimpleOneToOne.simple_id", sql);
   }
+
+  @Test
+  public void should_join_one_to_one_on_annotated_column() {
+    String sql = select().from(SimpleOneToOne.class).from(SimpleOneToMany.class).sql();
+    assertEquals("SELECT SimpleOneToOne.*, SimpleOneToMany.* FROM SimpleOneToOne INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = SimpleOneToOne.sotm_fk", sql);
+
+    sql = select().from(SimpleOneToMany.class).from(SimpleOneToOne.class).sql();
+    assertEquals("SELECT SimpleOneToMany.*, SimpleOneToOne.* FROM SimpleOneToMany INNER JOIN SimpleOneToOne ON SimpleOneToMany.id = SimpleOneToOne.sotm_fk", sql);
+}
 
   @Test
   public void should_join_bidirectional_one_to_one_automatically() {
-    String sql = select().from(BiDirectionalOneToOne1.class).from(BiDirectionalOneToOne2.class).toString();
-    assertEquals("SELECT BiDirectionalOneToOne1.*, BiDirectionalOneToOne2.* FROM BiDirectionalOneToOne1 INNER JOIN BiDirectionalOneToOne2 ON BiDirectionalOneToOne2.id = BiDirectionalOneToOne1.biDirectionalOneToOne2_id", sql);
-  }
+    String sql = select().from(BiDirectionalOneToOne1.class).from(BiDirectionalOneToOne2.class).sql();
+    assertEquals("SELECT BiDirectionalOneToOne1.*, BiDirectionalOneToOne2.* FROM BiDirectionalOneToOne1 INNER JOIN BiDirectionalOneToOne2 ON BiDirectionalOneToOne1.id = BiDirectionalOneToOne2.biDirectionalOneToOne1_id", sql);
+
+    sql = select().from(BiDirectionalOneToOne2.class).from(BiDirectionalOneToOne1.class).sql();
+    assertEquals("SELECT BiDirectionalOneToOne2.*, BiDirectionalOneToOne1.* FROM BiDirectionalOneToOne2 INNER JOIN BiDirectionalOneToOne1 ON BiDirectionalOneToOne1.id = BiDirectionalOneToOne2.biDirectionalOneToOne1_id", sql);
+}
 
   @Test
   public void should_join_one_to_many_automatically() {
-    String sql = select().from(Simple.class).column("name", "name_alias").from(SimpleOneToMany.class).toString();
+    String sql = select().from(Simple.class).column("name", "name_alias").from(SimpleOneToMany.class).sql();
     assertEquals("SELECT Simple.name AS \"name_alias\", SimpleOneToMany.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id", sql);
+
+    sql = select().from(SimpleOneToMany.class).from(Simple.class).column("name", "name_alias").sql();
+    assertEquals("SELECT SimpleOneToMany.*, Simple.name AS \"name_alias\" FROM SimpleOneToMany INNER JOIN Simple ON SimpleOneToMany.id = Simple.simpleOneToMany_id", sql);
   }
 
   @Test
   public void should_use_field_as_join_column_name() {
-    String sql = select().from(PkId.class).from(SimpleOneToMany.class).toString();
+    String sql = select().from(PkId.class).from(SimpleOneToMany.class).sql();
     assertEquals("SELECT PkId.*, SimpleOneToMany.* FROM PkId INNER JOIN SimpleOneToMany ON PkId.pk = SimpleOneToMany.pkId_pk", sql);
+
+    sql = select().from(SimpleOneToMany.class).from(PkId.class).sql();
+    assertEquals("SELECT SimpleOneToMany.*, PkId.* FROM SimpleOneToMany INNER JOIN PkId ON PkId.pk = SimpleOneToMany.pkId_pk", sql);
+  }
+
+  @Test
+  public void should_get_column_name_from_annotation_on_many_to_one() {
+    String sql = select().from(PkId.class).from(SimpleJoinColumn.class).sql();
+    assertEquals("SELECT PkId.*, SimpleJoinColumn.* FROM PkId INNER JOIN SimpleJoinColumn ON PkId.pk = SimpleJoinColumn.pk_fk", sql);
+
+    sql = select().from(SimpleJoinColumn.class).from(PkId.class).sql();
+    assertEquals("SELECT SimpleJoinColumn.*, PkId.* FROM SimpleJoinColumn INNER JOIN PkId ON PkId.pk = SimpleJoinColumn.pk_fk", sql);
+  }
+
+  @Test
+  public void should_get_column_name_from_annotation_on_one_to_many() {
+    String sql = select().from(SimpleJpa.class).join(SimpleOneToMany.class).sql();
+    assertEquals("SELECT simple_with_jpa.* FROM simple_with_jpa INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = simple_with_jpa.renamed_one_to_many", sql);
+
+    sql = select().from(SimpleOneToMany.class).from(SimpleJpa.class).sql();
+    assertEquals("SELECT SimpleOneToMany.*, simple_with_jpa.* FROM SimpleOneToMany INNER JOIN simple_with_jpa ON SimpleOneToMany.id = simple_with_jpa.renamed_one_to_many", sql);
   }
 
   @Test
   public void should_inner_join() {
-    String sql = select().from(Simple.class).join(SimpleOneToMany.class).toString();
+    String sql = select().from(Simple.class).join(SimpleOneToMany.class).sql();
     assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id", sql);
   }
 
   @Test
   public void should_inner_join_multiple_tables() {
-    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).toString();
+    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).sql();
     assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id INNER JOIN ParentToMany ON ParentToMany.id = SimpleOneToMany.parentToMany_id", sql);
   }
 
   @Test
   public void should_order_on_last_selected_table() {
-    String sql = select().from(Simple.class).asc("name").from(SimpleOneToOne.class).desc("other").toString();
+    String sql = select().from(Simple.class).asc("name").from(SimpleOneToOne.class).desc("other").sql();
     assertEquals(select().from(Simple.class).from(SimpleOneToOne.class) + " ORDER BY Simple.name ASC, SimpleOneToOne.other DESC", sql);
   }
 
   @Test
   public void should_order_on_last_joined_table() {
-    String sql = select().from(Simple.class).asc("name").join(SimpleOneToOne.class).desc("other").toString();
+    String sql = select().from(Simple.class).asc("name").join(SimpleOneToOne.class).desc("other").sql();
     assertEquals(select().from(Simple.class).join(SimpleOneToOne.class) + " ORDER BY Simple.name ASC, SimpleOneToOne.other DESC", sql);
   }
 
   @Test
   public void should_order_on_source_of_last_join() {
-    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).asc("other").toString();
+    String sql = select().from(Simple.class).join(SimpleOneToMany.class).join(ParentToMany.class, SimpleOneToMany.class).asc("other").sql();
     assertEquals("SELECT Simple.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id INNER JOIN ParentToMany ON ParentToMany.id = SimpleOneToMany.parentToMany_id ORDER BY ParentToMany.other ASC", sql);
   }
 
   @Test
   public void should_use_property() {
-    assertEquals("SELECT PropertyAccess.name_property FROM PropertyAccess", select().from(PropertyAccess.class).columns("name").toString());
+    assertEquals("SELECT PropertyAccess.name_property FROM PropertyAccess", select().from(PropertyAccess.class).columns("name").sql());
   }
 
   @Test

@@ -50,12 +50,15 @@ select().from(Address.class).join(User.class).sql(); // SELECT Address.* FROM Us
 select().from(User.class).where().eq("id").from(Address.class).where().eq("street").sql(); // SELECT User.* FROM User INNER JOIN Address ON User.id = Address.user_id WHERE User.id = ? AND Address.street = ?
 ````
 
+In a bidirectional one-to-one relationship, the foreign key column is assumed to be on the owning table, ie. the one without a value for mappedBy in the OneToOne annotation.
+
 ## License
 
 sql-writer is copyright Moandji Ezana and licensed under the MIT License.
 
 ## TODO
 
+* Allow customisation of how column and table names are generated
 * Support alternative SQL syntaxes
 * Generate mappings for lightweight field-name safety
 * Support ManyToMany mappings

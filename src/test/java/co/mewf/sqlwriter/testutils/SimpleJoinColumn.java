@@ -7,7 +7,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-public class SimpleOneToMany {
+public class SimpleJoinColumn {
 
   @Id
   private Long id;
@@ -16,9 +16,6 @@ public class SimpleOneToMany {
   private List<Simple> simples;
 
   @ManyToOne
+  @JoinColumn(name = "pk_fk")
   private PkId pkId;
-
-  @OneToMany
-  @JoinColumn(name = "renamed_one_to_many")
-  private List<SimpleJpa> simpleJpas;
 }

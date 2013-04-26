@@ -13,6 +13,7 @@ import java.lang.reflect.Modifier;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
@@ -95,6 +96,10 @@ class Entities {
 
   public static boolean isToOneRelation(AccessibleObject accessibleObject) {
     return accessibleObject.isAnnotationPresent(ManyToOne.class) || accessibleObject.isAnnotationPresent(OneToOne.class);
+  }
+
+  public static String getAnnotatedColumnName(AnnotatedElement annotatedElement) {
+    return annotatedElement.isAnnotationPresent(JoinColumn.class) ? annotatedElement.getAnnotation(JoinColumn.class).name() : "";
   }
 
   private static boolean isIdAccessor(AnnotatedElement annotatedElement) {

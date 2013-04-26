@@ -105,27 +105,34 @@ public class TableInfo {
   }
 
   private Join join(Class<?> targetClass, String type) {
+    ColumnInfo idColumn = getIdColumn();
+    TableInfo targetTable = new TableInfo(targetClass);
+    ColumnInfo targetIdColumn = targetTable.getIdColumn();
+
     for (Field field : targetClass.getDeclaredFields()) {
+      String columnName = Entities.getAnnotatedColumnName(field);
       field.setAccessible(true);
       Join join = null;
 
-      if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
-        TableInfo targetTable = new TableInfo(targetClass);
-        ColumnInfo idColumn = targetTable.getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(targetTable.name + SEPARATOR + idColumn.name)), type);
+      if (field.isAnnotationPresent(OneToOne.class) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty() && entityClass.equals(field.getType())) {
+        if (columnName.isEmpty()) {
+          columnName = columnize(name + SEPARATOR + idColumn.name);
+        }
+        join = new Join(this, idColumn, targetTable.column(columnName), type);
       }
 
-      if (Entities.isToOneRelation(field) && entityClass.equals(field.getType())) {
-        TableInfo targetTable = new TableInfo(targetClass);
-        ColumnInfo joinColumn = getIdColumn();
-        join = new Join(this, joinColumn, targetTable.column(columnize(name + SEPARATOR + joinColumn.name)), type);
+      if (field.isAnnotationPresent(ManyToOne.class) && entityClass.equals(field.getType())) {
+        if (columnName.isEmpty()) {
+          columnName = columnize(name + SEPARATOR + idColumn.name);
+        }
+        join = new Join(this, idColumn, targetTable.column(columnName), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
-        TableInfo targetTable = new TableInfo(targetClass);
-        ColumnInfo targetColumn = targetTable.getIdColumn();
-        String joinColumnName = columnize(targetTable.name + SEPARATOR + targetColumn.name);
-        join = new Join(this, targetColumn, column(joinColumnName), type);
+        if (columnName.isEmpty()) {
+          columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
+        }
+        join = new Join(this, targetIdColumn, column(columnName), type);
       }
 
       if (join != null) {
@@ -135,23 +142,30 @@ public class TableInfo {
     }
 
     for (Field field : entityClass.getDeclaredFields()) {
+      String columnName = Entities.getAnnotatedColumnName(field);
       field.setAccessible(true);
       Join join = null;
 
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
-        TableInfo targetTable = new TableInfo(targetClass);
-        ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, targetTable.column(columnize(name + SEPARATOR + idColumn.name)), type);
+        if (columnName.isEmpty()) {
+          columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
+        }
+        join = new Join(this, targetIdColumn, column(columnName), type);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(field.getType())) {
-        ColumnInfo idColumn = new TableInfo(targetClass).getIdColumn();
-        join = new Join(this, idColumn, column(field.getName() + SEPARATOR + idColumn.name), type);
+        if (columnName.isEmpty()) {
+          columnName = columnize(field.getName() + SEPARATOR + targetIdColumn.name);
+        }
+        join = new Join(this, targetIdColumn, column(columnName), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
-        ColumnInfo idColumn = getIdColumn();
-        join = new Join(this, idColumn, new TableInfo(targetClass).column(columnize(name + SEPARATOR + idColumn.name)), type);
+        if (columnName.isEmpty()) {
+          columnName = columnize(name + SEPARATOR + idColumn.name);
+        }
+
+        join = new Join(this, idColumn, targetTable.column(columnName), type);
       }
 
       if (join != null) {
