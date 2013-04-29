@@ -15,8 +15,8 @@ public class Uninsertable {
 
   private transient String transientString;
   @Transient
-  private String transientAnnotationString;
+  private String transientAnnotation;
   private static String staticString;
-  @Column(insertable = false)
+  @Column(insertable = false, updatable = false)
   private String notInserted;
 }

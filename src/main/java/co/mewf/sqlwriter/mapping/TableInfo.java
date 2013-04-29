@@ -75,6 +75,26 @@ public class TableInfo {
     return insertableColumns;
   }
 
+  public Collection<ColumnInfo> getUpdatableColumns() {
+    PropertyDescriptorWrapper[] wrappers = PropertyDescriptorWrapper.of(entityClass);
+    ArrayList<ColumnInfo> updatableColumns = new ArrayList<ColumnInfo>();
+
+    for (PropertyDescriptorWrapper descriptor : wrappers) {
+      AccessibleObject accessibleObject = descriptor.getAccessibleObject();
+      if (Entities.isTransient(accessibleObject) ||
+          Entities.isStatic(descriptor.getMember()) ||
+          accessibleObject.isAnnotationPresent(GeneratedValue.class) ||
+          !descriptor.getMember().getDeclaringClass().equals(entityClass) ||
+          (accessibleObject.isAnnotationPresent(Column.class) && !accessibleObject.getAnnotation(Column.class).updatable())) {
+        continue;
+      }
+
+      updatableColumns.add(column(descriptor.getName()));
+    }
+
+    return updatableColumns;
+  }
+
   public StringBuilder toColumnsString(StringBuilder builder) {
     if (columns.isEmpty()) {
       return builder.append(name).append(".*");
