@@ -1,6 +1,6 @@
 # sql-writer
 
-Writes SQL from Java classes. It uses types, JPA annotations and a fluent interface to make using SQL less of a hassle. sql-writer tries not to get in your way.
+Writes SQL from Java classes. It uses types, JPA annotations and a fluent interface to make using SQL less of a hassle. sql-writer tries not to get in your way. It is inspired by [squel.js](http://hiddentao.github.io/squel/).
 
 ## Installation
 
@@ -9,6 +9,16 @@ Requires Java 6 and Maven.
 `git clone`
 
 `mvn install`
+
+Add the following to your POM:
+
+````xml
+<dependency>
+  <groupId>co.mewf.sqlwriter</groupId>
+  <artifactId>sql-writer</artifactId>
+  <version>0.1.0</version>
+</dependency>
+````
 
 ## Usage
 
@@ -23,7 +33,7 @@ insert(User.class).columns("name", "birthDate").sql(); // INSERT INTO User(name,
 delete(User.class).where().eq("id").sql(); // DELETE FROM User WHERE id = ?
 ````
 
-Annotations such as @Table and @Column are taken into account
+Annotations such as @Table and @Column are taken into account.
 
 ````java
 @Table(name = "usr_tbl")
@@ -36,6 +46,8 @@ select().from(User.class).columns("name").sql(); // SELECT usr_tbl.usr_name FROM
 ````
 
 As in JPA, the @Id annotation is required. It determines whether field or property access is used: place it on a field for field access or on a method for method access.
+
+### Joins
 
 Joins are derived from the JPA annotations. Unidirectional and bidirectional @OneToOne, @OneToMany and @ManyToOne are supported.
 
@@ -51,6 +63,10 @@ select().from(User.class).where().eq("id").from(Address.class).where().eq("stree
 ````
 
 In a bidirectional one-to-one relationship, the foreign key column is assumed to be on the owning table, ie. the one without a value for mappedBy in the OneToOne annotation.
+
+### Shortcuts
+
+When no columns are specified in an update or insert query, all columns are included. By default, certain columns are excluded: generated values, static or transient fields, `@Column(insertable = false)`, `@Column(updatable = false)`, etc.
 
 ## License
 
