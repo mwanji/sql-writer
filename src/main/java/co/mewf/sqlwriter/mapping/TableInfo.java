@@ -2,11 +2,15 @@ package co.mewf.sqlwriter.mapping;
 
 import co.mewf.sqlwriter.utils.Strings;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -49,6 +53,26 @@ public class TableInfo {
 
   public TableInfo rightJoin(Class<?> from, Class<?> to) {
     return join(from, to, "RIGHT");
+  }
+
+  public Collection<ColumnInfo> getInsertableColumns() {
+    PropertyDescriptorWrapper[] wrappers = PropertyDescriptorWrapper.of(entityClass);
+    ArrayList<ColumnInfo> insertableColumns = new ArrayList<ColumnInfo>();
+
+    for (PropertyDescriptorWrapper descriptor : wrappers) {
+      AccessibleObject accessibleObject = descriptor.getAccessibleObject();
+      if (Entities.isTransient(accessibleObject) ||
+          Entities.isStatic(descriptor.getMember()) ||
+          accessibleObject.isAnnotationPresent(GeneratedValue.class) ||
+          !descriptor.getMember().getDeclaringClass().equals(entityClass) ||
+          (accessibleObject.isAnnotationPresent(Column.class) && !accessibleObject.getAnnotation(Column.class).insertable())) {
+        continue;
+      }
+
+      insertableColumns.add(column(descriptor.getName()));
+    }
+
+    return insertableColumns;
   }
 
   public StringBuilder toColumnsString(StringBuilder builder) {

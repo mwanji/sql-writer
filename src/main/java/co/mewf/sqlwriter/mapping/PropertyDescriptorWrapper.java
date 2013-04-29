@@ -18,12 +18,12 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
 
   private static final PropertyDescriptorWrapper[] EMPTY_PROPERTY_DESCRIPTOR_ARRAY = new PropertyDescriptorWrapper[0];
 
-  public static PropertyDescriptorWrapper of(Class<?> aClass, String property) throws IntrospectionException, NoSuchFieldException {
-    AccessibleObject idAccessor = Entities.getIdAccessorOrNull(aClass);
+  public static PropertyDescriptorWrapper of(Class<?> c, String property) throws IntrospectionException, NoSuchFieldException {
+    AccessibleObject idAccessor = Entities.getIdAccessorOrNull(c);
     if (idAccessor instanceof Field) {
-      return new PropertyDescriptorWrapper(property, aClass.getDeclaredField(property));
+      return new PropertyDescriptorWrapper(property, c.getDeclaredField(property));
     } else if (idAccessor instanceof Method) {
-      BeanInfo beanInfo = Introspector.getBeanInfo(aClass);
+      BeanInfo beanInfo = Introspector.getBeanInfo(c);
 
       for (PropertyDescriptor propertyDescriptor : beanInfo.getPropertyDescriptors()) {
         if (propertyDescriptor.getName().equals(property)) {
@@ -35,6 +35,14 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
     } else {
       return null;
     }
+  }
+
+  public static PropertyDescriptorWrapper[] of(Class<?> c) {
+    AccessibleObject idAccessor = Entities.getIdAccessorOrNull(c);
+    if (idAccessor instanceof Method) {
+      return getPropertyDescriptorsFromMethods(c);
+    }
+    return getPropertyDescriptorsFromFields(c);
   }
 
   public static PropertyDescriptorWrapper forId(Class<?> c) {
@@ -52,7 +60,7 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
     }
   }
 
-  public static PropertyDescriptorWrapper[] getPropertyDescriptorsFromMethods(Class<?> c) {
+  private static PropertyDescriptorWrapper[] getPropertyDescriptorsFromMethods(Class<?> c) {
     BeanInfo beanInfo = null;
     try {
       beanInfo = Introspector.getBeanInfo(c);
@@ -60,11 +68,6 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
       List<PropertyDescriptorWrapper> propertyDescriptors = new ArrayList<PropertyDescriptorWrapper>();
 
       for (PropertyDescriptor propertyDescriptor : beanInfo.getPropertyDescriptors()) {
-        Method readMethod = propertyDescriptor.getReadMethod();
-        if (Entities.isTransient(readMethod) || Entities.isStatic(readMethod)) {
-          continue;
-        }
-
         propertyDescriptors.add(new PropertyDescriptorWrapper(propertyDescriptor));
       }
 
@@ -74,13 +77,10 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
     }
   }
 
-  public static PropertyDescriptorWrapper[] getPropertyDescriptorsFromFields(Class<?> c) {
+  private static PropertyDescriptorWrapper[] getPropertyDescriptorsFromFields(Class<?> c) {
     List<PropertyDescriptorWrapper> propertyDescriptors = new ArrayList<PropertyDescriptorWrapper>();
 
     for (Field field : c.getDeclaredFields()) {
-      if (Entities.isTransient(field) || Entities.isStatic(field)) {
-        continue;
-      }
 
       String propertyName = Entities.getName(field);
 

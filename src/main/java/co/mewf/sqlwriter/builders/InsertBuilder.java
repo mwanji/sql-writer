@@ -30,6 +30,10 @@ public class InsertBuilder {
   public String toString() {
     StringBuilder builder = new StringBuilder("INSERT INTO ").append(table.name).append('(');
 
+    if (columns.isEmpty()) {
+      columns.addAll(table.getInsertableColumns());
+    }
+
     for (ColumnInfo column : columns) {
       builder.append(column.name).append(", ");
     }
