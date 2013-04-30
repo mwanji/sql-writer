@@ -13,7 +13,7 @@ public class WhereBuilder {
     AND, OR;
   }
 
-  public WhereBuilder(TableInfo table, Object filterable, boolean first) {
+  WhereBuilder(TableInfo table, Object filterable, boolean first) {
     this.table = table;
     this.filterable = filterable;
     this.first = first;
