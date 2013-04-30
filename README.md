@@ -18,6 +18,8 @@ sql-writer is in Maven Central. Add the following to your POM:
 
 ## Usage
 
+It is recommendend to only generate the SQL once, either by storing it as constants or as instance variables in a class that is only instantiated once.
+
 The query builders are accessible from the Queries class as static methods.
 
 ````java
@@ -55,10 +57,17 @@ class Address {
 
 select().from(User.class).from(Address.class).sql(); // SELECT User.*, Address.* FROM User INNER JOIN Address ON User.id = Address.user_id
 select().from(Address.class).join(User.class).sql(); // SELECT Address.* FROM User INNER JOIN Address ON User.id = Address.user_id
-select().from(User.class).where().eq("id").from(Address.class).where().eq("street").sql(); // SELECT User.* FROM User INNER JOIN Address ON User.id = Address.user_id WHERE User.id = ? AND Address.street = ?
 ````
 
 In a bidirectional one-to-one relationship, the foreign key column is assumed to be on the owning table, ie. the one without a value for mappedBy in the OneToOne annotation.
+
+### Extra clauses
+
+sql-writer tries to stay close to SQL syntax, but there is one significant departure: the context for WHERE and ORDER BY clauses is given by the preceding call to `join` or `from`.
+
+````java
+select().from(User.class).where().eq("id").from(Address.class).where().eq("street").sql(); // SELECT User.* FROM User INNER JOIN Address ON User.id = Address.user_id WHERE User.id = ? AND Address.street = ?
+````
 
 ### Shortcuts
 
