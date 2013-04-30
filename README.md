@@ -6,11 +6,7 @@ Writes SQL from Java classes. It uses types, JPA annotations and a fluent interf
 
 Requires Java 6 and Maven.
 
-`git clone`
-
-`mvn install`
-
-Add the following to your POM:
+sql-writer is in Maven Central. Add the following to your POM:
 
 ````xml
 <dependency>
