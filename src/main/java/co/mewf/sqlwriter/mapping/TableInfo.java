@@ -11,6 +11,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -20,7 +22,7 @@ public class TableInfo {
   private static final String SEPARATOR = "_";
   public final Class<?> entityClass;
   public final String name;
-  public final List<Join> joins = new ArrayList<Join>();
+  public final List<JoinInfo> joins = new ArrayList<JoinInfo>();
   public final List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
 
   public TableInfo(Class<?> entityClass) {
@@ -108,7 +110,7 @@ public class TableInfo {
   }
 
   public StringBuilder toJoinString(StringBuilder builder) {
-    for (Join join : joins) {
+    for (JoinInfo join : joins) {
       join.toString(builder);
     }
 
@@ -142,13 +144,13 @@ public class TableInfo {
 
   private TableInfo join(Class<?> from, Class<?> to, String type) {
     TableInfo fromTable = new TableInfo(from);
-    Join join = fromTable.join(to, type);
+    JoinInfo join = fromTable.join(to, type);
     joins.add(join);
 
     return fromTable;
   }
 
-  private Join join(Class<?> targetClass, String type) {
+  private JoinInfo join(Class<?> targetClass, String type) {
     ColumnInfo idColumn = getIdColumn();
     TableInfo targetTable = new TableInfo(targetClass);
     ColumnInfo targetIdColumn = targetTable.getIdColumn();
@@ -156,27 +158,39 @@ public class TableInfo {
     for (Field field : targetClass.getDeclaredFields()) {
       String columnName = Entities.getAnnotatedColumnName(field);
       field.setAccessible(true);
-      Join join = null;
+      JoinInfo join = null;
 
       if (field.isAnnotationPresent(OneToOne.class) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty() && entityClass.equals(field.getType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new Join(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && entityClass.equals(field.getType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new Join(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new Join(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
+      }
+
+      if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
+        String joinTableName = field.isAnnotationPresent(JoinTable.class) ? field.getAnnotation(JoinTable.class).name() : targetTable.name + SEPARATOR + name;
+        String firstJoinToColumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
+        String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? field.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
+
+        TableInfo joinTable = new TableInfo(joinTableName);
+        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type);
+        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type);
+
+        join = new ManyToManyJoin(firstJoin, secondJoin);
       }
 
       if (join != null) {
@@ -188,20 +202,20 @@ public class TableInfo {
     for (Field field : entityClass.getDeclaredFields()) {
       String columnName = Entities.getAnnotatedColumnName(field);
       field.setAccessible(true);
-      Join join = null;
+      JoinInfo join = null;
 
       if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new Join(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(field.getType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(field.getName() + SEPARATOR + targetIdColumn.name);
         }
-        join = new Join(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
@@ -209,7 +223,19 @@ public class TableInfo {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
 
-        join = new Join(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
+      }
+
+      if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
+        String joinTableName = field.isAnnotationPresent(JoinTable.class) ? field.getAnnotation(JoinTable.class).name() : name + SEPARATOR + targetTable.name;
+        String firstJoinToColumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? field.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
+        String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
+
+        TableInfo joinTable = new TableInfo(joinTableName);
+        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type);
+        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type);
+
+        join = new ManyToManyJoin(firstJoin, secondJoin);
       }
 
       if (join != null) {
@@ -228,5 +254,10 @@ public class TableInfo {
 
   private String columnize(String s) {
     return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+  }
+
+  private TableInfo(String name) {
+    this.name = name;
+    this.entityClass = null;
   }
 }

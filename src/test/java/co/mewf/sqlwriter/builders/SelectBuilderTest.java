@@ -196,4 +196,31 @@ public class SelectBuilderTest {
     String sql = select().from(Simple.class).rightJoin(SimpleRelation.class).sql();
     assertEquals("SELECT Simple.* FROM Simple RIGHT JOIN SimpleRelation ON Simple.id = SimpleRelation.simple_id", sql);
   }
+
+  @Test
+  public void should_join_unidirectional_many_to_many() {
+    String sql = select().from(Simple.class).from(ParentToMany.class).sql();
+    assertEquals("SELECT Simple.*, ParentToMany.* FROM Simple INNER JOIN ParentToMany_Simple ON Simple.id = ParentToMany_Simple.simple_id INNER JOIN ParentToMany ON ParentToMany.id = ParentToMany_Simple.parentToMany_id", sql);
+
+    sql = select().from(ParentToMany.class).from(Simple.class).sql();
+    assertEquals("SELECT ParentToMany.*, Simple.* FROM ParentToMany INNER JOIN ParentToMany_Simple ON ParentToMany.id = ParentToMany_Simple.parentToMany_id INNER JOIN Simple ON Simple.id = ParentToMany_Simple.simple_id", sql);
+  }
+
+  @Test
+  public void should_join_bidirectional_many_to_many() {
+    String sql = select().from(ParentToMany.class).from(SimpleJpa.class).sql();
+    assertEquals("SELECT ParentToMany.*, simple_with_jpa.* FROM ParentToMany INNER JOIN ParentToMany_simple_with_jpa ON ParentToMany.id = ParentToMany_simple_with_jpa.parentToMany_id INNER JOIN simple_with_jpa ON simple_with_jpa.id = ParentToMany_simple_with_jpa.simple_with_jpa_id", sql);
+
+    sql = select().from(SimpleJpa.class).from(ParentToMany.class).sql();
+    assertEquals("SELECT simple_with_jpa.*, ParentToMany.* FROM simple_with_jpa INNER JOIN ParentToMany_simple_with_jpa ON simple_with_jpa.id = ParentToMany_simple_with_jpa.simple_with_jpa_id INNER JOIN ParentToMany ON ParentToMany.id = ParentToMany_simple_with_jpa.parentToMany_id", sql);
+  }
+
+  @Test
+  public void should_get_join_table_and_columns_from_annotation_on_unidirectional_many_to_many() {
+    String sql = select().from(ParentToMany.class).from(PkId.class).sql();
+    assertEquals("SELECT ParentToMany.*, PkId.* FROM ParentToMany INNER JOIN ptm_pk ON ParentToMany.id = ptm_pk.p_2_many_fk INNER JOIN PkId ON PkId.pk = ptm_pk.pk_id_fk", sql);
+
+    sql = select().from(PkId.class).from(ParentToMany.class).sql();
+    assertEquals("SELECT PkId.*, ParentToMany.* FROM PkId INNER JOIN ptm_pk ON PkId.pk = ptm_pk.pk_id_fk INNER JOIN ParentToMany ON ParentToMany.id = ptm_pk.p_2_many_fk", sql);
+  }
 }
