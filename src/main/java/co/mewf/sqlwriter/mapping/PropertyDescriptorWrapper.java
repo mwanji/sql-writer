@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -166,5 +167,9 @@ class PropertyDescriptorWrapper extends PropertyDescriptor {
     }
 
     return columnName;
+  }
+
+  public ParameterizedType getGenericPropertyType() {
+    return (ParameterizedType) (field != null ? field.getGenericType() : propertyDescriptor.getReadMethod().getGenericReturnType());
   }
 }

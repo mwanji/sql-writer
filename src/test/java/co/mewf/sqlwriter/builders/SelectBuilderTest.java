@@ -103,12 +103,21 @@ public class SelectBuilderTest {
 }
 
   @Test
-  public void should_join_one_to_many_automatically() {
+  public void should_join_unidirectional_one_to_many() {
     String sql = select().from(Simple.class).column("name", "name_alias").from(SimpleOneToMany.class).sql();
     assertEquals("SELECT Simple.name AS \"name_alias\", SimpleOneToMany.* FROM Simple INNER JOIN SimpleOneToMany ON SimpleOneToMany.id = Simple.simpleOneToMany_id", sql);
 
     sql = select().from(SimpleOneToMany.class).from(Simple.class).column("name", "name_alias").sql();
     assertEquals("SELECT SimpleOneToMany.*, Simple.name AS \"name_alias\" FROM SimpleOneToMany INNER JOIN Simple ON SimpleOneToMany.id = Simple.simpleOneToMany_id", sql);
+  }
+
+  @Test
+  public void should_join_one_to_many_with_method_access() {
+    String sql = select().from(PropertyAccess.class).from(Simple.class).sql();
+    assertEquals("SELECT PropertyAccess.*, Simple.* FROM PropertyAccess INNER JOIN Simple ON PropertyAccess.id = Simple.propertyAccess_id", sql);
+
+    sql = select().from(Simple.class).from(PropertyAccess.class).sql();
+    assertEquals("SELECT Simple.*, PropertyAccess.* FROM Simple INNER JOIN PropertyAccess ON PropertyAccess.id = Simple.propertyAccess_id", sql);
   }
 
   @Test

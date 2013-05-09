@@ -3,8 +3,6 @@ package co.mewf.sqlwriter.mapping;
 import co.mewf.sqlwriter.utils.Strings;
 
 import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -155,36 +153,36 @@ public class TableInfo {
     TableInfo targetTable = new TableInfo(targetClass);
     ColumnInfo targetIdColumn = targetTable.getIdColumn();
 
-    for (Field field : targetClass.getDeclaredFields()) {
-      String columnName = Entities.getAnnotatedColumnName(field);
-      field.setAccessible(true);
+    for (PropertyDescriptorWrapper property : PropertyDescriptorWrapper.of(targetClass)) {
+      AccessibleObject accessibleObject = property.getAccessibleObject();
+      String columnName = Entities.getAnnotatedColumnName(accessibleObject);
       JoinInfo join = null;
 
-      if (field.isAnnotationPresent(OneToOne.class) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty() && entityClass.equals(field.getType())) {
+      if (accessibleObject.isAnnotationPresent(OneToOne.class) && accessibleObject.getAnnotation(OneToOne.class).mappedBy().isEmpty() && entityClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
         join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(ManyToOne.class) && entityClass.equals(field.getType())) {
+      if (accessibleObject.isAnnotationPresent(ManyToOne.class) && entityClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
         join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(OneToMany.class) && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
+      if (accessibleObject.isAnnotationPresent(OneToMany.class) && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
         join = new SingleJoin(this, targetIdColumn, column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && entityClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
-        String joinTableName = field.isAnnotationPresent(JoinTable.class) ? field.getAnnotation(JoinTable.class).name() : targetTable.name + SEPARATOR + name;
-        String firstJoinToColumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
-        String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? field.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
+      if (accessibleObject.isAnnotationPresent(ManyToMany.class) && accessibleObject.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
+        String joinTableName = accessibleObject.isAnnotationPresent(JoinTable.class) ? accessibleObject.getAnnotation(JoinTable.class).name() : targetTable.name + SEPARATOR + name;
+        String firstJoinToColumnName = accessibleObject.isAnnotationPresent(JoinTable.class) && accessibleObject.getAnnotation(JoinTable.class).joinColumns().length > 0 ? accessibleObject.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
+        String secondJoinToCoumnName = accessibleObject.isAnnotationPresent(JoinTable.class) && accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
 
         TableInfo joinTable = new TableInfo(joinTableName);
         SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type);
@@ -199,26 +197,26 @@ public class TableInfo {
       }
     }
 
-    for (Field field : entityClass.getDeclaredFields()) {
+    for (PropertyDescriptorWrapper property : PropertyDescriptorWrapper.of(entityClass)) {
+      AccessibleObject field = property.getAccessibleObject();
       String columnName = Entities.getAnnotatedColumnName(field);
-      field.setAccessible(true);
       JoinInfo join = null;
 
-      if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(field.getType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
+      if (field.isAnnotationPresent(OneToOne.class) && targetClass.equals(property.getPropertyType()) && field.getAnnotation(OneToOne.class).mappedBy().isEmpty()) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
         join = new SingleJoin(this, targetIdColumn, column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(field.getType())) {
+      if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
-          columnName = columnize(field.getName() + SEPARATOR + targetIdColumn.name);
+          columnName = columnize(property.getName() + SEPARATOR + targetIdColumn.name);
         }
         join = new SingleJoin(this, targetIdColumn, column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
+      if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
@@ -226,7 +224,7 @@ public class TableInfo {
         join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
       }
 
-      if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && targetClass.equals(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0])) {
+      if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
         String joinTableName = field.isAnnotationPresent(JoinTable.class) ? field.getAnnotation(JoinTable.class).name() : name + SEPARATOR + targetTable.name;
         String firstJoinToColumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? field.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
