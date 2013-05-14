@@ -163,21 +163,21 @@ public class TableInfo {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
+        join = new JoinInfo(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(ManyToOne.class) && entityClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
+        join = new JoinInfo(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(OneToMany.class) && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
+        join = new JoinInfo(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(ManyToMany.class) && accessibleObject.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -186,8 +186,8 @@ public class TableInfo {
         String secondJoinToCoumnName = accessibleObject.isAnnotationPresent(JoinTable.class) && accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
 
         TableInfo joinTable = new TableInfo(joinTableName);
-        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
-        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
+        JoinInfo firstJoin = new JoinInfo(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
+        JoinInfo secondJoin = new JoinInfo(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
 
         joins.add(firstJoin);
         join = secondJoin;
@@ -208,14 +208,14 @@ public class TableInfo {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
+        join = new JoinInfo(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(property.getName() + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
+        join = new JoinInfo(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -223,7 +223,7 @@ public class TableInfo {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
 
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
+        join = new JoinInfo(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -232,8 +232,8 @@ public class TableInfo {
         String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
 
         TableInfo joinTable = new TableInfo(joinTableName);
-        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
-        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
+        JoinInfo firstJoin = new JoinInfo(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
+        JoinInfo secondJoin = new JoinInfo(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
 
         joins.add(firstJoin);
         join = secondJoin;
