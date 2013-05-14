@@ -144,12 +144,12 @@ public class TableInfo {
 
   private TableInfo join(Class<?> from, Class<?> to, String type) {
     TableInfo fromTable = new TableInfo(from, joins, dialect);
-    JoinInfo join = fromTable.join(to, type);
+    fromTable.join(to, type);
 
     return fromTable;
   }
 
-  private JoinInfo join(Class<?> targetClass, String type) {
+  private void join(Class<?> targetClass, String type) {
     ColumnInfo idColumn = getIdColumn();
     TableInfo targetTable = new TableInfo(targetClass, dialect);
     ColumnInfo targetIdColumn = targetTable.getIdColumn();
@@ -195,7 +195,7 @@ public class TableInfo {
 
       if (join != null) {
         joins.add(join);
-        return join;
+        return;
       }
     }
 
@@ -241,11 +241,9 @@ public class TableInfo {
 
       if (join != null) {
         joins.add(join);
-        return join;
+        return;
       }
     }
-
-    return null;
   }
 
   private ColumnInfo getIdColumn() {
