@@ -1,5 +1,6 @@
 package co.mewf.sqlwriter.builders;
 
+import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.ColumnInfo;
 import co.mewf.sqlwriter.mapping.TableInfo;
 
@@ -10,9 +11,11 @@ public class InsertBuilder {
 
   private final TableInfo table;
   private final List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+  private final Dialect dialect;
 
-  public InsertBuilder(Class<?> entityClass) {
-    this.table = new TableInfo(entityClass);
+  public InsertBuilder(Class<?> entityClass, Dialect dialect) {
+    this.table = new TableInfo(entityClass, dialect);
+    this.dialect = dialect;
   }
 
   public InsertBuilder columns(String... columns) {
@@ -28,23 +31,6 @@ public class InsertBuilder {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder("INSERT INTO ").append(table.name).append('(');
-
-    if (columns.isEmpty()) {
-      columns.addAll(table.getInsertableColumns());
-    }
-
-    for (ColumnInfo column : columns) {
-      builder.append(column.name).append(", ");
-    }
-    builder.delete(builder.length() - 2, builder.length());
-    builder.append(") VALUES(");
-    for (ColumnInfo column : columns) {
-      builder.append("?, ");
-    }
-    builder.delete(builder.length() - 2, builder.length());
-    builder.append(')');
-
-    return builder.toString();
+    return dialect.insert(table, columns);
   }
 }

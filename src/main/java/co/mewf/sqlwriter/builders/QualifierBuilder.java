@@ -4,7 +4,7 @@ import co.mewf.sqlwriter.mapping.ColumnInfo;
 
 
 
-class QualifierBuilder {
+public class QualifierBuilder {
 
   private final Object builder;
   private final StringBuilder order = new StringBuilder();
@@ -24,7 +24,7 @@ class QualifierBuilder {
     return this;
   }
 
-  StringBuilder toString(StringBuilder stringBuilder) {
+  public StringBuilder toString(StringBuilder stringBuilder) {
     stringBuilder.append(this.order);
     if (limit > -1) {
       stringBuilder.append(" LIMIT ").append(limit);

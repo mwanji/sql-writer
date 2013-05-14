@@ -56,7 +56,7 @@ public class SelectWhereBuilder {
   /**
    * @return the StringBuilder passed in, after having appended to it
    */
-  StringBuilder toString(StringBuilder builder) {
+  public StringBuilder toString(StringBuilder builder) {
     return where.toString(builder);
   }
 

@@ -1,5 +1,6 @@
 package co.mewf.sqlwriter.builders;
 
+import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.TableInfo;
 import co.mewf.sqlwriter.utils.Strings;
 
@@ -18,6 +19,11 @@ public class SelectBuilder {
   private final QualifierBuilder qualifier = new QualifierBuilder(this);
   private TableInfo currentTable;
   private TableInfo rootTable;
+  private final Dialect dialect;
+
+  public SelectBuilder(Dialect dialect) {
+    this.dialect = dialect;
+  }
 
   /**
    * Retrieves the columns from the given entity and inner joins it to the previous entity given to the builder.
@@ -27,7 +33,7 @@ public class SelectBuilder {
    */
   public SelectBuilder from(Class<?> entityClass) {
     if (rootTable == null) {
-      rootTable = new TableInfo(entityClass);
+      rootTable = new TableInfo(entityClass, dialect);
       currentTable = rootTable;
     } else {
       join(entityClass);
@@ -151,6 +157,7 @@ public class SelectBuilder {
       }
     }
 
-    return qualifier.toString(builder).toString();
+    qualifier.toString(builder).toString();
+    return dialect.select(rootTable, tables, wheres, qualifier);
   }
 }

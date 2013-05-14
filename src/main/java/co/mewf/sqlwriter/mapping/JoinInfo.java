@@ -1,6 +1,6 @@
 package co.mewf.sqlwriter.mapping;
 
-interface JoinInfo {
+public interface JoinInfo {
 
   StringBuilder toString(StringBuilder builder);
 

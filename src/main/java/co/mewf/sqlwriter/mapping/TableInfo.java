@@ -1,5 +1,7 @@
 package co.mewf.sqlwriter.mapping;
 
+import co.mewf.sqlwriter.dialects.Dialect;
+import co.mewf.sqlwriter.dialects.StandardDialect;
 import co.mewf.sqlwriter.utils.Strings;
 
 import java.lang.reflect.AccessibleObject;
@@ -20,12 +22,12 @@ public class TableInfo {
   private static final String SEPARATOR = "_";
   public final Class<?> entityClass;
   public final String name;
-  public final List<JoinInfo> joins = new ArrayList<JoinInfo>();
+  public final List<JoinInfo> joins;
   public final List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+  private final Dialect dialect;
 
-  public TableInfo(Class<?> entityClass) {
-    this.entityClass = entityClass;
-    this.name = getTableName(entityClass);
+  public TableInfo(Class<?> entityClass, Dialect dialect) {
+    this(entityClass, new ArrayList<JoinInfo>(), dialect);
   }
 
   public ColumnInfo column(String column) {
@@ -33,11 +35,11 @@ public class TableInfo {
   }
 
   public ColumnInfo column(String column, String alias) {
-    return new ColumnInfo(this, getColumnName(column), alias);
+    return new ColumnInfo(this, getColumnName(column), alias, dialect);
   }
 
   public FunctionColumnInfo addFunction(String function, String column, String alias) {
-    FunctionColumnInfo functionColumnInfo = new FunctionColumnInfo(this, function, getColumnName(column), alias);
+    FunctionColumnInfo functionColumnInfo = new FunctionColumnInfo(this, function, getColumnName(column), alias, dialect);
     columns.add(functionColumnInfo);
 
     return functionColumnInfo;
@@ -117,7 +119,7 @@ public class TableInfo {
 
   @Override
   public String toString() {
-    return name;
+    return dialect.table(this);
   }
 
   private String getTableName(Class<?> entityClass) {
@@ -141,16 +143,15 @@ public class TableInfo {
   }
 
   private TableInfo join(Class<?> from, Class<?> to, String type) {
-    TableInfo fromTable = new TableInfo(from);
+    TableInfo fromTable = new TableInfo(from, joins, dialect);
     JoinInfo join = fromTable.join(to, type);
-    joins.add(join);
 
     return fromTable;
   }
 
   private JoinInfo join(Class<?> targetClass, String type) {
     ColumnInfo idColumn = getIdColumn();
-    TableInfo targetTable = new TableInfo(targetClass);
+    TableInfo targetTable = new TableInfo(targetClass, dialect);
     ColumnInfo targetIdColumn = targetTable.getIdColumn();
 
     for (PropertyDescriptorWrapper property : PropertyDescriptorWrapper.of(targetClass)) {
@@ -162,21 +163,21 @@ public class TableInfo {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(ManyToOne.class) && entityClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(OneToMany.class) && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (accessibleObject.isAnnotationPresent(ManyToMany.class) && accessibleObject.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && entityClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -185,10 +186,11 @@ public class TableInfo {
         String secondJoinToCoumnName = accessibleObject.isAnnotationPresent(JoinTable.class) && accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns().length > 0 ? accessibleObject.getAnnotation(JoinTable.class).inverseJoinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
 
         TableInfo joinTable = new TableInfo(joinTableName);
-        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type);
-        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type);
+        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
+        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
 
-        join = new ManyToManyJoin(firstJoin, secondJoin);
+        joins.add(firstJoin);
+        join = secondJoin;
       }
 
       if (join != null) {
@@ -206,14 +208,14 @@ public class TableInfo {
         if (columnName.isEmpty()) {
           columnName = columnize(targetTable.name + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(ManyToOne.class) && targetClass.equals(property.getPropertyType())) {
         if (columnName.isEmpty()) {
           columnName = columnize(property.getName() + SEPARATOR + targetIdColumn.name);
         }
-        join = new SingleJoin(this, targetIdColumn, column(columnName), type);
+        join = new SingleJoin(this, targetIdColumn, column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(OneToMany.class) && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -221,7 +223,7 @@ public class TableInfo {
           columnName = columnize(name + SEPARATOR + idColumn.name);
         }
 
-        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type);
+        join = new SingleJoin(this, idColumn, targetTable.column(columnName), type, dialect);
       }
 
       if (field.isAnnotationPresent(ManyToMany.class) && field.getAnnotation(ManyToMany.class).mappedBy().isEmpty() && targetClass.equals(property.getGenericPropertyType().getActualTypeArguments()[0])) {
@@ -230,10 +232,11 @@ public class TableInfo {
         String secondJoinToCoumnName = field.isAnnotationPresent(JoinTable.class) && field.getAnnotation(JoinTable.class).joinColumns().length > 0 ? field.getAnnotation(JoinTable.class).joinColumns()[0].name() : columnize(name + SEPARATOR + idColumn.name);
 
         TableInfo joinTable = new TableInfo(joinTableName);
-        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type);
-        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type);
+        SingleJoin firstJoin = new SingleJoin(joinTable, targetIdColumn, joinTable.column(firstJoinToColumnName), type, dialect);
+        SingleJoin secondJoin = new SingleJoin(this, idColumn, joinTable.column(secondJoinToCoumnName), type, dialect);
 
-        join = new ManyToManyJoin(firstJoin, secondJoin);
+        joins.add(firstJoin);
+        join = secondJoin;
       }
 
       if (join != null) {
@@ -257,5 +260,14 @@ public class TableInfo {
   private TableInfo(String name) {
     this.name = name;
     this.entityClass = null;
+    this.joins = new ArrayList<JoinInfo>();
+    this.dialect = new StandardDialect();
+  }
+
+  private TableInfo(Class<?> entityClass, List<JoinInfo> joins, Dialect dialect) {
+    this.entityClass = entityClass;
+    this.dialect = dialect;
+    this.name = getTableName(entityClass);
+    this.joins = joins;
   }
 }

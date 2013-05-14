@@ -1,6 +1,7 @@
 package co.mewf.sqlwriter.builders;
 
 import static org.junit.Assert.assertEquals;
+import co.mewf.sqlwriter.dialects.StandardDialect;
 import co.mewf.sqlwriter.mapping.ColumnInfo;
 import co.mewf.sqlwriter.mapping.TableInfo;
 import co.mewf.sqlwriter.testutils.EmptyNames;
@@ -11,14 +12,14 @@ public class TableInfoTest {
 
   @Test
   public void should_ignore_empty_table_annotation() {
-    TableInfo table = new TableInfo(EmptyNames.class);
+    TableInfo table = new TableInfo(EmptyNames.class, new StandardDialect());
 
     assertEquals("EmptyNames", table.name);
   }
 
   @Test
   public void should_ignore_empty_column_name_annotation() {
-    TableInfo table = new TableInfo(EmptyNames.class);
+    TableInfo table = new TableInfo(EmptyNames.class, new StandardDialect());
     ColumnInfo column = table.column("emptyColumnName");
 
     assertEquals(table.name + ".emptyColumnName", column.toString());

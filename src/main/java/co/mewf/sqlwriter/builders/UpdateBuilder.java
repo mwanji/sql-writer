@@ -1,6 +1,7 @@
 package co.mewf.sqlwriter.builders;
 
 import co.mewf.sqlwriter.builders.QualifierBuilder.Order;
+import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.ColumnInfo;
 import co.mewf.sqlwriter.mapping.TableInfo;
 
@@ -13,9 +14,11 @@ public class UpdateBuilder {
   private TableInfo table;
   private WhereBuilder where;
   private QualifierBuilder qualifiers = new QualifierBuilder(this);
+  private final Dialect dialect;
 
-  public UpdateBuilder(Class<?> entityClass) {
-    this.table = new TableInfo(entityClass);
+  public UpdateBuilder(Class<?> entityClass, Dialect dialect) {
+    this.table = new TableInfo(entityClass, dialect);
+    this.dialect = dialect;
   }
 
   public UpdateBuilder set(String... columns) {
@@ -51,24 +54,6 @@ public class UpdateBuilder {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder("UPDATE ").append(table).append(" SET");
-
-    if (columns.isEmpty()) {
-      columns.addAll(table.getUpdatableColumns());
-    }
-
-    for (ColumnInfo column : columns) {
-      builder.append(' ').append(column).append(" = ?,");
-    }
-    builder.deleteCharAt(builder.length() - 1);
-
-    if (where != null) {
-      builder.append(" WHERE");
-      where.toString(builder);
-    }
-
-    qualifiers.toString(builder);
-
-    return builder.toString();
+    return dialect.update(table, columns, where, qualifiers);
   }
 }

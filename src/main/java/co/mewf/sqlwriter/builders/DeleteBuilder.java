@@ -1,5 +1,6 @@
 package co.mewf.sqlwriter.builders;
 
+import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.TableInfo;
 
 
@@ -9,10 +10,12 @@ public class DeleteBuilder {
   private final TableInfo table;
   private final QualifierBuilder qualifier = new QualifierBuilder(this);
   private WhereBuilder where;
+  private final Dialect dialect;
 
-  public DeleteBuilder(Class<?> entityClass) {
+  public DeleteBuilder(Class<?> entityClass, Dialect dialect) {
     this.entityClass = entityClass;
-    this.table = new TableInfo(entityClass);
+    this.dialect = dialect;
+    this.table = new TableInfo(entityClass, dialect);
   }
 
   public WhereBuilder where() {
@@ -41,13 +44,6 @@ public class DeleteBuilder {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder("DELETE FROM ").append(table.name);
-    if (where != null) {
-      builder.append(" WHERE");
-      where.toString(builder);
-    }
-    qualifier.toString(builder);
-
-    return builder.toString();
+    return dialect.delete(table, where, qualifier);
   }
 }

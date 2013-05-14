@@ -57,7 +57,7 @@ public class WhereBuilder {
   /**
    * @return the StringBuilder passed in, after having appended to it
    */
-  StringBuilder toString(StringBuilder builder) {
+  public StringBuilder toString(StringBuilder builder) {
     return builder.append(this.clauseBuilder);
   }
 
