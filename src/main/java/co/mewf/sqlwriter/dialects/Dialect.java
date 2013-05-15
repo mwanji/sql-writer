@@ -17,4 +17,5 @@ public interface Dialect {
   String insert(TableInfo table, List<ColumnInfo> columns);
   String update(TableInfo table, List<ColumnInfo> columns, WhereBuilder where, QualifierBuilder qualifiers);
   String delete(TableInfo table, WhereBuilder where, QualifierBuilder qualifier);
+  String qualify(String order, int limit, int offset);
 }

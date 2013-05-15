@@ -2,7 +2,6 @@ package co.mewf.sqlwriter.builders;
 
 import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.TableInfo;
-import co.mewf.sqlwriter.utils.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +15,14 @@ public class SelectBuilder {
 
   private final List<TableInfo> tables = new ArrayList<TableInfo>();
   private final List<SelectWhereBuilder> wheres = new ArrayList<SelectWhereBuilder>();
-  private final QualifierBuilder qualifier = new QualifierBuilder(this);
+  private final QualifierBuilder qualifier;
   private TableInfo currentTable;
   private TableInfo rootTable;
   private final Dialect dialect;
 
   public SelectBuilder(Dialect dialect) {
     this.dialect = dialect;
+    this.qualifier = new QualifierBuilder(this, dialect);
   }
 
   /**
@@ -141,23 +141,6 @@ public class SelectBuilder {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder("SELECT ");
-
-    for (TableInfo table : tables) {
-      table.toColumnsString(builder).append(", ");
-    }
-
-    Strings.chompChomp(builder).append(" FROM ").append(rootTable.name);
-    rootTable.toJoinString(builder);
-
-    if (!wheres.isEmpty()) {
-      builder.append(" WHERE");
-      for (SelectWhereBuilder where : wheres) {
-        where.toString(builder);
-      }
-    }
-
-    qualifier.toString(builder).toString();
     return dialect.select(rootTable, tables, wheres, qualifier);
   }
 }

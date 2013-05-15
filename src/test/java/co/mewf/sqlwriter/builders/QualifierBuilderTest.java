@@ -13,11 +13,11 @@ public class QualifierBuilderTest {
 
   @Test
   public void should_limit() {
-    assertEquals(select + " LIMIT 10", select().from(Simple.class).limit(10).toString());
+    assertEquals(select + " LIMIT 10", select().from(Simple.class).limit(10).sql());
   }
 
   @Test
   public void should_order_ascending() {
-    assertEquals(select + " ORDER BY Simple.name ASC LIMIT 10", select.limit(10).asc("name").toString());
+    assertEquals(select + " ORDER BY Simple.name ASC LIMIT 10", select.limit(10).asc("name").sql());
   }
 }

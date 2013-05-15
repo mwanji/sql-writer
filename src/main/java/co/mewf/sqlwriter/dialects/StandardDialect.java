@@ -29,7 +29,7 @@ public class StandardDialect implements Dialect {
       }
     }
 
-    return qualifier.toString(builder).toString();
+    return builder.append(qualifier).toString();
   }
 
   @Override
@@ -55,7 +55,7 @@ public class StandardDialect implements Dialect {
   }
 
   @Override
-  public String update(TableInfo table, List<ColumnInfo> columns, WhereBuilder where, QualifierBuilder qualifiers) {
+  public String update(TableInfo table, List<ColumnInfo> columns, WhereBuilder where, QualifierBuilder qualifier) {
     StringBuilder builder = new StringBuilder("UPDATE ").append(table).append(" SET");
 
     if (columns.isEmpty()) {
@@ -72,7 +72,7 @@ public class StandardDialect implements Dialect {
       where.toString(builder);
     }
 
-    qualifiers.toString(builder);
+    builder.append(qualifier);
 
     return builder.toString();
   }
@@ -84,7 +84,7 @@ public class StandardDialect implements Dialect {
       builder.append(" WHERE");
       where.toString(builder);
     }
-    qualifier.toString(builder);
+    builder.append(qualifier);
 
     return builder.toString();
   }
@@ -107,5 +107,20 @@ public class StandardDialect implements Dialect {
   @Override
   public String function(String name, TableInfo table, String column, String alias) {
     return name + "(" + table + "." + column + ")" + (alias != null ? " AS \"" + alias + "\"" : "");
+  }
+
+  @Override
+  public String qualify(String order, int limit, int offset) {
+    StringBuilder builder = new StringBuilder(order);
+
+    if (limit > -1) {
+      builder.append(" LIMIT ").append(limit);
+    }
+
+    if (offset > -1) {
+      builder.append(" OFFSET ").append(offset);
+    }
+
+    return builder.toString();
   }
 }

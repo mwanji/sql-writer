@@ -8,7 +8,7 @@ public class DeleteBuilder {
 
   private final Class<?> entityClass;
   private final TableInfo table;
-  private final QualifierBuilder qualifier = new QualifierBuilder(this);
+  private final QualifierBuilder qualifier;
   private WhereBuilder where;
   private final Dialect dialect;
 
@@ -16,6 +16,7 @@ public class DeleteBuilder {
     this.entityClass = entityClass;
     this.dialect = dialect;
     this.table = new TableInfo(entityClass, dialect);
+    this.qualifier = new QualifierBuilder(this, dialect);
   }
 
   public WhereBuilder where() {

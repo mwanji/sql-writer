@@ -1,5 +1,6 @@
 package co.mewf.sqlwriter.builders;
 
+import co.mewf.sqlwriter.dialects.Dialect;
 import co.mewf.sqlwriter.mapping.ColumnInfo;
 
 
@@ -10,30 +11,28 @@ public class QualifierBuilder {
   private final StringBuilder order = new StringBuilder();
   private int limit = -1;
   private int offset = -1;
+  private final Dialect dialect;
 
   static enum Order {
     ASC, DESC;
   }
 
-  QualifierBuilder(Object builder) {
+  QualifierBuilder(Object builder, Dialect dialect) {
     this.builder = builder;
+    this.dialect = dialect;
+  }
+
+  public boolean hasLimit() {
+    return limit > -1;
+  }
+
+  public int getLimit() {
+    return limit;
   }
 
   QualifierBuilder limit(int limit) {
     this.limit = limit;
     return this;
-  }
-
-  public StringBuilder toString(StringBuilder stringBuilder) {
-    stringBuilder.append(this.order);
-    if (limit > -1) {
-      stringBuilder.append(" LIMIT ").append(limit);
-    }
-    if (offset > -1) {
-      stringBuilder.append(" OFFSET ").append(offset);
-    }
-
-    return stringBuilder;
   }
 
   void offset(int offset) {
@@ -51,6 +50,6 @@ public class QualifierBuilder {
 
   @Override
   public String toString() {
-    return builder.toString();
+    return dialect.qualify(order.toString(), limit, offset);
   }
 }

@@ -13,12 +13,13 @@ public class UpdateBuilder {
   private List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
   private TableInfo table;
   private WhereBuilder where;
-  private QualifierBuilder qualifiers = new QualifierBuilder(this);
+  private QualifierBuilder qualifiers;
   private final Dialect dialect;
 
   public UpdateBuilder(Class<?> entityClass, Dialect dialect) {
     this.table = new TableInfo(entityClass, dialect);
     this.dialect = dialect;
+    this.qualifiers = new QualifierBuilder(this, dialect);
   }
 
   public UpdateBuilder set(String... columns) {
