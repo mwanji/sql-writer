@@ -1,6 +1,7 @@
 package co.mewf.sqlwriter.builders;
 
 import co.mewf.sqlwriter.mapping.TableInfo;
+import co.mewf.sqlwriter.utils.Strings;
 
 public class WhereBuilder {
 
@@ -81,5 +82,23 @@ public class WhereBuilder {
       clauseBuilder.append(prefix).append(' ');
     }
     clauseBuilder.append(table.column(column)).append(' ').append(sign).append(" ?");
+  }
+
+  /**
+   * @param parameterCount The number of parameters that will be passed to the IN function.
+   */
+  public WhereBuilder in(String column, int parameterCount) {
+    clauseBuilder.append(' ');
+    if (!first || clauseBuilder.length() > 1) {
+      clauseBuilder.append(Bool.AND).append(' ');
+    }
+    clauseBuilder.append(table.column(column)).append(" IN (");
+    for (int i = 0; i < parameterCount; i++) {
+      clauseBuilder.append("?, ");
+    }
+    Strings.chompChomp(clauseBuilder);
+    clauseBuilder.append(")");
+
+    return this;
   }
 }

@@ -59,6 +59,14 @@ public class SelectWhereBuilder {
   }
 
   /**
+   * @param parameterCount The number of parameters that will be passed to the IN function.
+   */
+  public SelectWhereBuilder in(String column, int parameterCount) {
+    where.in(column, parameterCount);
+    return this;
+  }
+
+  /**
    * @return the StringBuilder passed in, after having appended to it
    */
   public StringBuilder toString(StringBuilder builder) {

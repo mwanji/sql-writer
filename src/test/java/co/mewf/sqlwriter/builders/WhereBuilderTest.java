@@ -77,11 +77,18 @@ public class WhereBuilderTest {
 
   @Test
   public void sql_should_alias_toString() {
-    assertEquals(update(Simple.class).set("name").where().eq("id").toString(), update(Simple.class).set("name").where().eq("id").sql());
+    String sql = update(Simple.class).set("name").where().eq("id").sql();
+    assertEquals(update(Simple.class).set("name").where().eq("id").toString(), sql);
   }
 
   @Test
   public void should_use_like() {
-    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.name LIKE ?", select().from(Simple.class).where().like("name").sql());
+    String sql = select().from(Simple.class).where().like("name").sql();
+    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.name LIKE ?", sql);
+  }
+
+  @Test
+  public void should_use_in() {
+    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.name IN (?, ?, ?)", select().from(Simple.class).where().in("name", 3).sql());
   }
 }
