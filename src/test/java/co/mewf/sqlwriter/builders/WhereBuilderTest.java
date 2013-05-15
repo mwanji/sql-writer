@@ -79,4 +79,9 @@ public class WhereBuilderTest {
   public void sql_should_alias_toString() {
     assertEquals(update(Simple.class).set("name").where().eq("id").toString(), update(Simple.class).set("name").where().eq("id").sql());
   }
+
+  @Test
+  public void should_use_like() {
+    assertEquals("SELECT Simple.* FROM Simple WHERE Simple.name LIKE ?", select().from(Simple.class).where().like("name").sql());
+  }
 }

@@ -54,6 +54,11 @@ public class WhereBuilder {
     return this;
   }
 
+  public WhereBuilder like(String column) {
+    write(Bool.AND, column, "LIKE");
+    return this;
+  }
+
   /**
    * @return the StringBuilder passed in, after having appended to it
    */

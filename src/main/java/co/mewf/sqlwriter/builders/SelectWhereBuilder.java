@@ -53,6 +53,11 @@ public class SelectWhereBuilder {
     return this;
   }
 
+  public SelectWhereBuilder like(String column) {
+    where.like(column);
+    return this;
+  }
+
   /**
    * @return the StringBuilder passed in, after having appended to it
    */
